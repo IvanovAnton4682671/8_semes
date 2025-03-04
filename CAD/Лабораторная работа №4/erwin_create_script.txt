@@ -1,0 +1,1447 @@
+CREATE TABLE Book
+( 
+	bookID               int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE Book
+	ADD CONSTRAINT XPKBook PRIMARY KEY  CLUSTERED (bookID ASC)
+go
+
+
+
+CREATE TABLE BookForCollection
+( 
+	collectionBookID     int  NOT NULL ,
+	bookID               int  NOT NULL ,
+	bookForCollectionID  int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE BookForCollection
+	ADD CONSTRAINT XPKBookForCollection PRIMARY KEY  CLUSTERED (bookForCollectionID ASC)
+go
+
+
+
+CREATE TABLE BooksForGroup
+( 
+	booksForGroupID      int  NOT NULL ,
+	groupID              int  NOT NULL ,
+	bookID               int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE BooksForGroup
+	ADD CONSTRAINT XPKBooksForGroup PRIMARY KEY  CLUSTERED (booksForGroupID ASC)
+go
+
+
+
+CREATE TABLE CollectionBook
+( 
+	collectionBookID     int  NOT NULL ,
+	collectionBookName   varchar(64)  NOT NULL ,
+	userID               int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE CollectionBook
+	ADD CONSTRAINT XPKCollectionBook PRIMARY KEY  CLUSTERED (collectionBookID ASC)
+go
+
+
+
+CREATE TABLE Group
+( 
+	groupID              int  NOT NULL ,
+	groupName            varchar(64)  NOT NULL ,
+	adminID              int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE Group
+	ADD CONSTRAINT XPKGroup PRIMARY KEY  CLUSTERED (groupID ASC)
+go
+
+
+
+CREATE TABLE GroupForUsers
+( 
+	groupForUsersID      int  NOT NULL ,
+	groupID              int  NOT NULL ,
+	userID               int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE GroupForUsers
+	ADD CONSTRAINT XPKGroupForUsers PRIMARY KEY  CLUSTERED (groupForUsersID ASC)
+go
+
+
+
+CREATE TABLE User
+( 
+	userID               int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE User
+	ADD CONSTRAINT XPKUser PRIMARY KEY  CLUSTERED (userID ASC)
+go
+
+
+
+CREATE TABLE UserFeedback
+( 
+	userFeedbackID       int  NOT NULL ,
+	userID               int  NOT NULL ,
+	bookID               int  NOT NULL 
+)
+go
+
+
+
+ALTER TABLE UserFeedback
+	ADD CONSTRAINT XPKUserFeedback PRIMARY KEY  CLUSTERED (userFeedbackID ASC)
+go
+
+
+
+
+ALTER TABLE BookForCollection
+	ADD CONSTRAINT R_4 FOREIGN KEY (collectionBookID) REFERENCES CollectionBook(collectionBookID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE BookForCollection
+	ADD CONSTRAINT R_5 FOREIGN KEY (bookID) REFERENCES Book(bookID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE BooksForGroup
+	ADD CONSTRAINT R_11 FOREIGN KEY (groupID) REFERENCES Group(groupID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE BooksForGroup
+	ADD CONSTRAINT R_12 FOREIGN KEY (bookID) REFERENCES Book(bookID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE CollectionBook
+	ADD CONSTRAINT R_1 FOREIGN KEY (userID) REFERENCES User(userID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE Group
+	ADD CONSTRAINT R_6 FOREIGN KEY (adminID) REFERENCES User(userID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE GroupForUsers
+	ADD CONSTRAINT R_8 FOREIGN KEY (groupID) REFERENCES Group(groupID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE GroupForUsers
+	ADD CONSTRAINT R_9 FOREIGN KEY (userID) REFERENCES User(userID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE UserFeedback
+	ADD CONSTRAINT R_13 FOREIGN KEY (userID) REFERENCES User(userID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+ALTER TABLE UserFeedback
+	ADD CONSTRAINT R_14 FOREIGN KEY (bookID) REFERENCES Book(bookID)
+		ON DELETE NO ACTION
+		ON UPDATE NO ACTION
+go
+
+
+
+
+CREATE TRIGGER tD_Book ON Book FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on Book */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* Book  BookForCollection on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="0002c6e3", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_5", FK_COLUMNS="bookID" */
+    IF EXISTS (
+      SELECT * FROM deleted,BookForCollection
+      WHERE
+        /*  %JoinFKPK(BookForCollection,deleted," = "," AND") */
+        BookForCollection.bookID = deleted.bookID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete Book because BookForCollection exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* Book  BooksForGroup on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_12", FK_COLUMNS="bookID" */
+    IF EXISTS (
+      SELECT * FROM deleted,BooksForGroup
+      WHERE
+        /*  %JoinFKPK(BooksForGroup,deleted," = "," AND") */
+        BooksForGroup.bookID = deleted.bookID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete Book because BooksForGroup exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* Book  UserFeedback on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_14", FK_COLUMNS="bookID" */
+    IF EXISTS (
+      SELECT * FROM deleted,UserFeedback
+      WHERE
+        /*  %JoinFKPK(UserFeedback,deleted," = "," AND") */
+        UserFeedback.bookID = deleted.bookID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete Book because UserFeedback exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_Book ON Book FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on Book */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insbookID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* Book  BookForCollection on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="000317b8", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_5", FK_COLUMNS="bookID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(bookID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,BookForCollection
+      WHERE
+        /*  %JoinFKPK(BookForCollection,deleted," = "," AND") */
+        BookForCollection.bookID = deleted.bookID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update Book because BookForCollection exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* Book  BooksForGroup on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_12", FK_COLUMNS="bookID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(bookID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,BooksForGroup
+      WHERE
+        /*  %JoinFKPK(BooksForGroup,deleted," = "," AND") */
+        BooksForGroup.bookID = deleted.bookID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update Book because BooksForGroup exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* Book  UserFeedback on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_14", FK_COLUMNS="bookID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(bookID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,UserFeedback
+      WHERE
+        /*  %JoinFKPK(UserFeedback,deleted," = "," AND") */
+        UserFeedback.bookID = deleted.bookID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update Book because UserFeedback exists.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_BookForCollection ON BookForCollection FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on BookForCollection */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* CollectionBook  BookForCollection on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00028aee", PARENT_OWNER="", PARENT_TABLE="CollectionBook"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_4", FK_COLUMNS="collectionBookID" */
+    IF EXISTS (SELECT * FROM deleted,CollectionBook
+      WHERE
+        /* %JoinFKPK(deleted,CollectionBook," = "," AND") */
+        deleted.collectionBookID = CollectionBook.collectionBookID AND
+        NOT EXISTS (
+          SELECT * FROM BookForCollection
+          WHERE
+            /* %JoinFKPK(BookForCollection,CollectionBook," = "," AND") */
+            BookForCollection.collectionBookID = CollectionBook.collectionBookID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last BookForCollection because CollectionBook exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* Book  BookForCollection on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_5", FK_COLUMNS="bookID" */
+    IF EXISTS (SELECT * FROM deleted,Book
+      WHERE
+        /* %JoinFKPK(deleted,Book," = "," AND") */
+        deleted.bookID = Book.bookID AND
+        NOT EXISTS (
+          SELECT * FROM BookForCollection
+          WHERE
+            /* %JoinFKPK(BookForCollection,Book," = "," AND") */
+            BookForCollection.bookID = Book.bookID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last BookForCollection because Book exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_BookForCollection ON BookForCollection FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on BookForCollection */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insbookForCollectionID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* CollectionBook  BookForCollection on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="0002b6a8", PARENT_OWNER="", PARENT_TABLE="CollectionBook"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_4", FK_COLUMNS="collectionBookID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(collectionBookID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,CollectionBook
+        WHERE
+          /* %JoinFKPK(inserted,CollectionBook) */
+          inserted.collectionBookID = CollectionBook.collectionBookID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update BookForCollection because CollectionBook does not exist.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* Book  BookForCollection on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_5", FK_COLUMNS="bookID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(bookID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,Book
+        WHERE
+          /* %JoinFKPK(inserted,Book) */
+          inserted.bookID = Book.bookID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update BookForCollection because Book does not exist.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_BooksForGroup ON BooksForGroup FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on BooksForGroup */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* Group  BooksForGroup on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00023f54", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_11", FK_COLUMNS="groupID" */
+    IF EXISTS (SELECT * FROM deleted,Group
+      WHERE
+        /* %JoinFKPK(deleted,Group," = "," AND") */
+        deleted.groupID = Group.groupID AND
+        NOT EXISTS (
+          SELECT * FROM BooksForGroup
+          WHERE
+            /* %JoinFKPK(BooksForGroup,Group," = "," AND") */
+            BooksForGroup.groupID = Group.groupID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last BooksForGroup because Group exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* Book  BooksForGroup on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_12", FK_COLUMNS="bookID" */
+    IF EXISTS (SELECT * FROM deleted,Book
+      WHERE
+        /* %JoinFKPK(deleted,Book," = "," AND") */
+        deleted.bookID = Book.bookID AND
+        NOT EXISTS (
+          SELECT * FROM BooksForGroup
+          WHERE
+            /* %JoinFKPK(BooksForGroup,Book," = "," AND") */
+            BooksForGroup.bookID = Book.bookID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last BooksForGroup because Book exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_BooksForGroup ON BooksForGroup FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on BooksForGroup */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insbooksForGroupID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* Group  BooksForGroup on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="000288b3", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_11", FK_COLUMNS="groupID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(groupID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,Group
+        WHERE
+          /* %JoinFKPK(inserted,Group) */
+          inserted.groupID = Group.groupID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update BooksForGroup because Group does not exist.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* Book  BooksForGroup on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_12", FK_COLUMNS="bookID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(bookID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,Book
+        WHERE
+          /* %JoinFKPK(inserted,Book) */
+          inserted.bookID = Book.bookID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update BooksForGroup because Book does not exist.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_CollectionBook ON CollectionBook FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on CollectionBook */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* CollectionBook  BookForCollection on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00022df3", PARENT_OWNER="", PARENT_TABLE="CollectionBook"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_4", FK_COLUMNS="collectionBookID" */
+    IF EXISTS (
+      SELECT * FROM deleted,BookForCollection
+      WHERE
+        /*  %JoinFKPK(BookForCollection,deleted," = "," AND") */
+        BookForCollection.collectionBookID = deleted.collectionBookID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete CollectionBook because BookForCollection exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* User  CollectionBook on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="CollectionBook"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_1", FK_COLUMNS="userID" */
+    IF EXISTS (SELECT * FROM deleted,User
+      WHERE
+        /* %JoinFKPK(deleted,User," = "," AND") */
+        deleted.userID = User.userID AND
+        NOT EXISTS (
+          SELECT * FROM CollectionBook
+          WHERE
+            /* %JoinFKPK(CollectionBook,User," = "," AND") */
+            CollectionBook.userID = User.userID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last CollectionBook because User exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_CollectionBook ON CollectionBook FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on CollectionBook */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @inscollectionBookID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* CollectionBook  BookForCollection on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00027448", PARENT_OWNER="", PARENT_TABLE="CollectionBook"
+    CHILD_OWNER="", CHILD_TABLE="BookForCollection"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_4", FK_COLUMNS="collectionBookID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(collectionBookID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,BookForCollection
+      WHERE
+        /*  %JoinFKPK(BookForCollection,deleted," = "," AND") */
+        BookForCollection.collectionBookID = deleted.collectionBookID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update CollectionBook because BookForCollection exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* User  CollectionBook on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="CollectionBook"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_1", FK_COLUMNS="userID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,User
+        WHERE
+          /* %JoinFKPK(inserted,User) */
+          inserted.userID = User.userID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update CollectionBook because User does not exist.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_Group ON Group FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on Group */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* Group  GroupForUsers on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="0002e4dd", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_8", FK_COLUMNS="groupID" */
+    IF EXISTS (
+      SELECT * FROM deleted,GroupForUsers
+      WHERE
+        /*  %JoinFKPK(GroupForUsers,deleted," = "," AND") */
+        GroupForUsers.groupID = deleted.groupID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete Group because GroupForUsers exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* Group  BooksForGroup on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_11", FK_COLUMNS="groupID" */
+    IF EXISTS (
+      SELECT * FROM deleted,BooksForGroup
+      WHERE
+        /*  %JoinFKPK(BooksForGroup,deleted," = "," AND") */
+        BooksForGroup.groupID = deleted.groupID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete Group because BooksForGroup exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* User  Group on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="Group"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_6", FK_COLUMNS="adminID" */
+    IF EXISTS (SELECT * FROM deleted,User
+      WHERE
+        /* %JoinFKPK(deleted,User," = "," AND") */
+        deleted.adminID = User.userID AND
+        NOT EXISTS (
+          SELECT * FROM Group
+          WHERE
+            /* %JoinFKPK(Group,User," = "," AND") */
+            Group.adminID = User.userID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last Group because User exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_Group ON Group FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on Group */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insgroupID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* Group  GroupForUsers on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="000342a8", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_8", FK_COLUMNS="groupID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(groupID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,GroupForUsers
+      WHERE
+        /*  %JoinFKPK(GroupForUsers,deleted," = "," AND") */
+        GroupForUsers.groupID = deleted.groupID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update Group because GroupForUsers exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* Group  BooksForGroup on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="BooksForGroup"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_11", FK_COLUMNS="groupID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(groupID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,BooksForGroup
+      WHERE
+        /*  %JoinFKPK(BooksForGroup,deleted," = "," AND") */
+        BooksForGroup.groupID = deleted.groupID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update Group because BooksForGroup exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* User  Group on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="Group"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_6", FK_COLUMNS="adminID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(adminID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,User
+        WHERE
+          /* %JoinFKPK(inserted,User) */
+          inserted.adminID = User.userID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update Group because User does not exist.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_GroupForUsers ON GroupForUsers FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on GroupForUsers */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* Group  GroupForUsers on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00025095", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_8", FK_COLUMNS="groupID" */
+    IF EXISTS (SELECT * FROM deleted,Group
+      WHERE
+        /* %JoinFKPK(deleted,Group," = "," AND") */
+        deleted.groupID = Group.groupID AND
+        NOT EXISTS (
+          SELECT * FROM GroupForUsers
+          WHERE
+            /* %JoinFKPK(GroupForUsers,Group," = "," AND") */
+            GroupForUsers.groupID = Group.groupID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last GroupForUsers because Group exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* User  GroupForUsers on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_9", FK_COLUMNS="userID" */
+    IF EXISTS (SELECT * FROM deleted,User
+      WHERE
+        /* %JoinFKPK(deleted,User," = "," AND") */
+        deleted.userID = User.userID AND
+        NOT EXISTS (
+          SELECT * FROM GroupForUsers
+          WHERE
+            /* %JoinFKPK(GroupForUsers,User," = "," AND") */
+            GroupForUsers.userID = User.userID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last GroupForUsers because User exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_GroupForUsers ON GroupForUsers FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on GroupForUsers */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insgroupForUsersID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* Group  GroupForUsers on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00027aa4", PARENT_OWNER="", PARENT_TABLE="Group"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_8", FK_COLUMNS="groupID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(groupID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,Group
+        WHERE
+          /* %JoinFKPK(inserted,Group) */
+          inserted.groupID = Group.groupID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update GroupForUsers because Group does not exist.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* User  GroupForUsers on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_9", FK_COLUMNS="userID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,User
+        WHERE
+          /* %JoinFKPK(inserted,User) */
+          inserted.userID = User.userID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update GroupForUsers because User does not exist.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_User ON User FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on User */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* User  CollectionBook on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="0003a53d", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="CollectionBook"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_1", FK_COLUMNS="userID" */
+    IF EXISTS (
+      SELECT * FROM deleted,CollectionBook
+      WHERE
+        /*  %JoinFKPK(CollectionBook,deleted," = "," AND") */
+        CollectionBook.userID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete User because CollectionBook exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* User  Group on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="Group"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_6", FK_COLUMNS="adminID" */
+    IF EXISTS (
+      SELECT * FROM deleted,Group
+      WHERE
+        /*  %JoinFKPK(Group,deleted," = "," AND") */
+        Group.adminID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete User because Group exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* User  GroupForUsers on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_9", FK_COLUMNS="userID" */
+    IF EXISTS (
+      SELECT * FROM deleted,GroupForUsers
+      WHERE
+        /*  %JoinFKPK(GroupForUsers,deleted," = "," AND") */
+        GroupForUsers.userID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete User because GroupForUsers exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* User  UserFeedback on parent delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_13", FK_COLUMNS="userID" */
+    IF EXISTS (
+      SELECT * FROM deleted,UserFeedback
+      WHERE
+        /*  %JoinFKPK(UserFeedback,deleted," = "," AND") */
+        UserFeedback.userID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30001,
+             @errmsg = 'Cannot delete User because UserFeedback exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_User ON User FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on User */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insuserID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* User  CollectionBook on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="0003ff04", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="CollectionBook"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_1", FK_COLUMNS="userID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,CollectionBook
+      WHERE
+        /*  %JoinFKPK(CollectionBook,deleted," = "," AND") */
+        CollectionBook.userID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update User because CollectionBook exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* User  Group on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="Group"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_6", FK_COLUMNS="adminID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,Group
+      WHERE
+        /*  %JoinFKPK(Group,deleted," = "," AND") */
+        Group.adminID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update User because Group exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* User  GroupForUsers on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="GroupForUsers"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_9", FK_COLUMNS="userID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,GroupForUsers
+      WHERE
+        /*  %JoinFKPK(GroupForUsers,deleted," = "," AND") */
+        GroupForUsers.userID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update User because GroupForUsers exists.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* User  UserFeedback on parent update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_13", FK_COLUMNS="userID" */
+  IF
+    /* %ParentPK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    IF EXISTS (
+      SELECT * FROM deleted,UserFeedback
+      WHERE
+        /*  %JoinFKPK(UserFeedback,deleted," = "," AND") */
+        UserFeedback.userID = deleted.userID
+    )
+    BEGIN
+      SELECT @errno  = 30005,
+             @errmsg = 'Cannot update User because UserFeedback exists.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+
+
+CREATE TRIGGER tD_UserFeedback ON UserFeedback FOR DELETE AS
+/* ERwin Builtin Trigger */
+/* DELETE trigger on UserFeedback */
+BEGIN
+  DECLARE  @errno   int,
+           @errmsg  varchar(255)
+    /* ERwin Builtin Trigger */
+    /* User  UserFeedback on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="000241b0", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_13", FK_COLUMNS="userID" */
+    IF EXISTS (SELECT * FROM deleted,User
+      WHERE
+        /* %JoinFKPK(deleted,User," = "," AND") */
+        deleted.userID = User.userID AND
+        NOT EXISTS (
+          SELECT * FROM UserFeedback
+          WHERE
+            /* %JoinFKPK(UserFeedback,User," = "," AND") */
+            UserFeedback.userID = User.userID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last UserFeedback because User exists.'
+      GOTO ERROR
+    END
+
+    /* ERwin Builtin Trigger */
+    /* Book  UserFeedback on child delete no action */
+    /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_14", FK_COLUMNS="bookID" */
+    IF EXISTS (SELECT * FROM deleted,Book
+      WHERE
+        /* %JoinFKPK(deleted,Book," = "," AND") */
+        deleted.bookID = Book.bookID AND
+        NOT EXISTS (
+          SELECT * FROM UserFeedback
+          WHERE
+            /* %JoinFKPK(UserFeedback,Book," = "," AND") */
+            UserFeedback.bookID = Book.bookID
+        )
+    )
+    BEGIN
+      SELECT @errno  = 30010,
+             @errmsg = 'Cannot delete last UserFeedback because Book exists.'
+      GOTO ERROR
+    END
+
+
+    /* ERwin Builtin Trigger */
+    RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
+
+
+CREATE TRIGGER tU_UserFeedback ON UserFeedback FOR UPDATE AS
+/* ERwin Builtin Trigger */
+/* UPDATE trigger on UserFeedback */
+BEGIN
+  DECLARE  @NUMROWS int,
+           @nullcnt int,
+           @validcnt int,
+           @insuserFeedbackID int,
+           @errno   int,
+           @errmsg  varchar(255)
+
+  SELECT @NUMROWS = @@rowcount
+  /* ERwin Builtin Trigger */
+  /* User  UserFeedback on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00026f94", PARENT_OWNER="", PARENT_TABLE="User"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_13", FK_COLUMNS="userID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(userID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,User
+        WHERE
+          /* %JoinFKPK(inserted,User) */
+          inserted.userID = User.userID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update UserFeedback because User does not exist.'
+      GOTO ERROR
+    END
+  END
+
+  /* ERwin Builtin Trigger */
+  /* Book  UserFeedback on child update no action */
+  /* ERWIN_RELATION:CHECKSUM="00000000", PARENT_OWNER="", PARENT_TABLE="Book"
+    CHILD_OWNER="", CHILD_TABLE="UserFeedback"
+    P2C_VERB_PHRASE="", C2P_VERB_PHRASE="", 
+    FK_CONSTRAINT="R_14", FK_COLUMNS="bookID" */
+  IF
+    /* %ChildFK(" OR",UPDATE) */
+    UPDATE(bookID)
+  BEGIN
+    SELECT @nullcnt = 0
+    SELECT @validcnt = count(*)
+      FROM inserted,Book
+        WHERE
+          /* %JoinFKPK(inserted,Book) */
+          inserted.bookID = Book.bookID
+    /* %NotnullFK(inserted," IS NULL","select @nullcnt = count(*) from inserted where"," AND") */
+    
+    IF @validcnt + @nullcnt != @NUMROWS
+    BEGIN
+      SELECT @errno  = 30007,
+             @errmsg = 'Cannot update UserFeedback because Book does not exist.'
+      GOTO ERROR
+    END
+  END
+
+
+  /* ERwin Builtin Trigger */
+  RETURN
+ERROR:
+    raiserror @errno @errmsg
+    rollback transaction
+END
+
+go
